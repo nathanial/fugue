@@ -1,0 +1,20 @@
+# Lake build artifacts
+.lake/
+lake-packages/
+build/
+
+# Editor files
+*.olean
+.*.swp
+*~
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib

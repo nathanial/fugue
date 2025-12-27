@@ -1,0 +1,67 @@
+/-
+  Fugue - Sound Synthesis Library for Lean 4
+
+  An algebra of sounds where signals are first-class values that compose naturally.
+
+  ## Quick Start
+
+  ```lean
+  import Fugue
+
+  open Fugue Osc Env Combine Render FFI
+
+  def main : IO Unit := do
+    -- Create an ADSR envelope
+    let env := ADSR.mk (attack := 0.02) (decay := 0.1) (sustain := 0.7) (release := 0.3)
+
+    -- Create a note with envelope
+    let note := applyEnvelope env (sine 440.0)
+
+    -- Render to samples and play
+    let samples := renderDSignal cdQuality note
+    let player ← AudioPlayer.create 44100.0
+    player.play samples
+  ```
+
+  ## Core Concepts
+
+  - `Signal α`: A function from time (Float) to a value
+  - `DSignal α`: A signal with known finite duration
+  - `Audio`: Alias for `Signal Float` (values in [-1, 1])
+
+  ## Modules
+
+  - `Fugue.Core`: Signal and DSignal types
+  - `Fugue.Osc`: Oscillators (sine, square, sawtooth, triangle, noise)
+  - `Fugue.Combine`: Mixing, scaling, sequencing
+  - `Fugue.Env`: ADSR envelopes
+  - `Fugue.Render`: Signal to sample buffer conversion
+  - `Fugue.FFI`: macOS audio playback
+-/
+
+-- Core types
+import Fugue.Core.Signal
+import Fugue.Core.Duration
+
+-- Oscillators
+import Fugue.Osc.Sine
+import Fugue.Osc.Square
+import Fugue.Osc.Sawtooth
+import Fugue.Osc.Triangle
+import Fugue.Osc.Noise
+
+-- Combinators
+import Fugue.Combine.Mix
+import Fugue.Combine.Scale
+import Fugue.Combine.Sequence
+
+-- Envelopes
+import Fugue.Env.ADSR
+
+-- Rendering
+import Fugue.Render.Config
+import Fugue.Render.Render
+
+-- FFI (audio playback)
+import Fugue.FFI.Types
+import Fugue.FFI.AudioQueue
