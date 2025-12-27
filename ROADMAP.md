@@ -16,11 +16,11 @@
 - [x] **Resonant filter** - Filter with Q/resonance control
 - [x] **Filter envelope** - Time-varying filter cutoff
 
-### Oscillators
-- [ ] **Pulse wave** - Square wave with variable duty cycle
-- [ ] **Wavetable oscillator** - Lookup-based synthesis
-- [ ] **Supersaw** - Multiple detuned sawtooth waves
-- [ ] **Sub-oscillator** - Octave-down accompaniment
+### Oscillators ✓
+- [x] **Pulse wave** - Square wave with variable duty cycle (squareDuty/pulse in Square.lean)
+- [x] **Wavetable oscillator** - Lookup-based synthesis with morphing
+- [x] **Supersaw** - Multiple detuned sawtooth waves (also: hypersaw, unison, supersquare)
+- [x] **Sub-oscillator** - Octave-down accompaniment (bassPatch, reeseBass, sub808)
 
 ### Synthesis Techniques
 - [ ] **FM synthesis** - Frequency modulation between oscillators

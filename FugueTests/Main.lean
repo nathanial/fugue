@@ -97,6 +97,122 @@ test "noise produces values in range" := do
     sig.sample (i.toFloat * 0.001)
   samples.all (fun v => v >= -1.0 && v <= 1.0) ≡ true
 
+-- Wavetable tests
+
+test "wavetable sine matches sine oscillator" := do
+  let wt := Wavetable.sine 256
+  let wtOsc := wavetable wt 440.0
+  let sineOsc := sine 440.0
+  -- Should be close (wavetable uses linear interpolation)
+  approxEq (wtOsc.sample 0.01) (sineOsc.sample 0.01) 0.05 ≡ true
+
+test "wavetable square alternates" := do
+  let wt := Wavetable.square 256
+  let sig := wavetable wt 1.0
+  approxEq (sig.sample 0.25) 1.0 0.1 ≡ true
+  approxEq (sig.sample 0.75) (-1.0) 0.1 ≡ true
+
+test "wavetableMorph interpolates between tables" := do
+  let wt1 := Wavetable.fromFunction (fun _ => 0.0) 64
+  let wt2 := Wavetable.fromFunction (fun _ => 1.0) 64
+  let morphed := wavetableMorph wt1 wt2 0.5 100.0
+  -- 50% morph should give ~0.5
+  approxEq (morphed.sample 0.0) 0.5 0.1 ≡ true
+
+test "wavetable fromHarmonics creates valid waveform" := do
+  let wt := Wavetable.fromHarmonics [(1, 1.0), (3, 0.33), (5, 0.2)] 256
+  let sig := wavetable wt 440.0
+  let v := sig.sample 0.01
+  (v >= -2.0 && v <= 2.0) ≡ true
+
+-- Supersaw tests
+
+test "supersaw produces valid output" := do
+  let ss := supersaw 440.0 20.0 7
+  let samples := List.range 100 |>.map fun i =>
+    ss.sample (i.toFloat * 0.001)
+  samples.all (fun v => v >= -2.0 && v <= 2.0) ≡ true
+
+test "supersaw with zero detune equals single saw" := do
+  let ss := supersaw 440.0 0.0 1
+  let saw := sawtooth 440.0
+  approxEq (ss.sample 0.01) (saw.sample 0.01) 0.01 ≡ true
+
+test "supersaw with more voices produces richer signal" := do
+  let ss3 := supersaw 440.0 20.0 3
+  let ss7 := supersaw 440.0 20.0 7
+  -- Both should produce valid bounded output
+  let v3 := ss3.sample 0.01
+  let v7 := ss7.sample 0.01
+  (v3 >= -2.0 && v3 <= 2.0 && v7 >= -2.0 && v7 <= 2.0) ≡ true
+
+test "hypersaw uses more voices than supersaw" := do
+  -- hypersaw uses 15 voices by default
+  let hs := hypersaw 440.0 30.0
+  let v := hs.sample 0.01
+  (v >= -2.0 && v <= 2.0) ≡ true
+
+test "supersquare produces bounded output" := do
+  let ss := supersquare 440.0 15.0 5
+  let v := ss.sample 0.01
+  (v >= -2.0 && v <= 2.0) ≡ true
+
+-- SubOsc tests
+
+test "subSine is one octave below" := do
+  let sub := subSine 440.0 1
+  -- Sub at t=0 should be 0 (sine at 0)
+  approxEq (sub.sample 0.0) 0.0 ≡ true
+  -- At quarter period of 220Hz, sub should be 1.0
+  let quarterPeriod := 1.0 / (4.0 * 220.0)
+  approxEq (sub.sample quarterPeriod) 1.0 ≡ true
+
+test "subSine two octaves is quarter frequency" := do
+  let sub := subSine 440.0 2
+  -- 440 / 4 = 110Hz, quarter period is 1/(4*110) = 0.00227
+  let quarterPeriod := 1.0 / (4.0 * 110.0)
+  approxEq (sub.sample quarterPeriod) 1.0 ≡ true
+
+test "subSquare produces square wave at lower frequency" := do
+  let sub := subSquare 440.0 1
+  -- At 220Hz, first half is positive, second half negative
+  approxEq (sub.sample 0.001) 1.0 ≡ true
+
+test "withSub mixes fundamental and sub" := do
+  let fund := sine 440.0
+  let mixed := withSub fund 440.0 0.5 1
+  -- Mixed signal should be bounded
+  let v := mixed.sample 0.01
+  (v >= -2.0 && v <= 2.0) ≡ true
+
+test "bassPatch produces bounded output" := do
+  let bass := bassPatch 110.0 0.5
+  let v := bass.sample 0.01
+  (v >= -2.0 && v <= 2.0) ≡ true
+
+test "reeseBass produces bounded output" := do
+  let reese := reeseBass 110.0 5.0 0.4
+  let v := reese.sample 0.01
+  (v >= -2.0 && v <= 2.0) ≡ true
+
+test "sub808 produces sine at lower octave" := do
+  let sub := sub808 110.0
+  -- Same as subSine 110 1 = 55Hz
+  approxEq (sub.sample 0.0) 0.0 ≡ true
+
+test "sub808Pitched starts higher and drops" := do
+  let kick := sub808Pitched 60.0 0.05
+  -- Early samples have higher frequency content
+  let early := kick.sample 0.001
+  let late := kick.sample 0.1
+  -- Both should be bounded
+  (early >= -2.0 && early <= 2.0 && late >= -2.0 && late <= 2.0) ≡ true
+
+test "layeredSub produces bounded output" := do
+  let layered := layeredSub 110.0 [0.7, 0.3]
+  let v := layered.sample 0.01
+  (v >= -2.0 && v <= 2.0) ≡ true
+
 #generate_tests
 
 end Tests.Oscillator

@@ -192,6 +192,57 @@ def playFilters (player : AudioPlayer) : IO Unit := do
   let hpSaw := applyEnvelopeWithHold env holdTime (highpass 1000.0 0.707 44100.0 (sawtooth 220.0))
   player.play (renderDSignalClipped cdQuality (scaleD 0.3 hpSaw))
 
+/-- Demonstrate new oscillator types. -/
+def playOscillators (player : AudioPlayer) : IO Unit := do
+  IO.println "Demonstrating advanced oscillators..."
+
+  let env := ADSR.create (attack := 0.01) (decay := 0.1) (sustain := 0.6) (release := 0.3)
+  let holdTime := 0.5
+
+  -- Wavetable oscillator
+  IO.println "  Wavetable sine..."
+  let wtSine := Wavetable.sine 256
+  let wtNote := applyEnvelopeWithHold env holdTime (wavetable wtSine 220.0)
+  player.play (renderDSignalClipped cdQuality (scaleD 0.3 wtNote))
+
+  -- Wavetable morph (sine to square)
+  IO.println "  Wavetable morph (sine → square)..."
+  let wtSquare := Wavetable.square 256
+  let morphed := wavetableMorph wtSine wtSquare 0.5 220.0
+  let morphNote := applyEnvelopeWithHold env holdTime morphed
+  player.play (renderDSignalClipped cdQuality (scaleD 0.25 morphNote))
+
+  -- Supersaw (thick and lush)
+  IO.println "  Supersaw (7 voices, 20 cents detune)..."
+  let ss := supersaw 220.0 20.0 7
+  let ssNote := applyEnvelopeWithHold env holdTime ss
+  player.play (renderDSignalClipped cdQuality (scaleD 0.2 ssNote))
+
+  -- Hypersaw (extreme thickness)
+  IO.println "  Hypersaw (15 voices)..."
+  let hs := hypersaw 220.0 30.0
+  let hsNote := applyEnvelopeWithHold env holdTime hs
+  player.play (renderDSignalClipped cdQuality (scaleD 0.15 hsNote))
+
+  -- Bass with sub-oscillator
+  IO.println "  Bass patch (saw + square sub)..."
+  let bass := bassPatch 110.0 0.6
+  let bassNote := applyEnvelopeWithHold env holdTime bass
+  player.play (renderDSignalClipped cdQuality (scaleD 0.3 bassNote))
+
+  -- Reese bass (detuned saws + sub)
+  IO.println "  Reese bass (detuned saws + sine sub)..."
+  let reese := reeseBass 110.0 8.0 0.5
+  let reeseNote := applyEnvelopeWithHold env holdTime reese
+  player.play (renderDSignalClipped cdQuality (scaleD 0.3 reeseNote))
+
+  -- 808 kick-style sub
+  IO.println "  808-style pitched sub..."
+  let kick := sub808Pitched 60.0 0.03
+  let kickEnv := ADSR.percussive (decay := 0.4)
+  let kickNote := applyEnvelope kickEnv kick
+  player.play (renderDSignalClipped cdQuality (scaleD 0.5 kickNote))
+
 def main : IO Unit := do
   IO.println "Fugue Demo - Sound Synthesis Library"
   IO.println "====================================\n"
@@ -217,6 +268,9 @@ def main : IO Unit := do
   IO.println ""
 
   playFilters player
+  IO.println ""
+
+  playOscillators player
   IO.println ""
 
   IO.println "Demo complete!"

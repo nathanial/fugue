@@ -32,7 +32,7 @@
   ## Modules
 
   - `Fugue.Core`: Signal and DSignal types
-  - `Fugue.Osc`: Oscillators (sine, square, sawtooth, triangle, noise)
+  - `Fugue.Osc`: Oscillators (sine, square, sawtooth, triangle, noise, wavetable, supersaw, sub)
   - `Fugue.Combine`: Mixing, scaling, sequencing
   - `Fugue.Env`: ADSR envelopes
   - `Fugue.Effects`: Audio effects (distortion, delay, reverb, chorus, modulation)
@@ -51,6 +51,9 @@ import Fugue.Osc.Square
 import Fugue.Osc.Sawtooth
 import Fugue.Osc.Triangle
 import Fugue.Osc.Noise
+import Fugue.Osc.Wavetable
+import Fugue.Osc.Supersaw
+import Fugue.Osc.SubOsc
 
 -- Combinators
 import Fugue.Combine.Mix
