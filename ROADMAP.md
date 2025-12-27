@@ -33,12 +33,12 @@
 - [ ] **Envelope followers** - Extract amplitude envelope from signal
 - [ ] **Sample and hold** - Stepped random modulation
 
-### Music Theory Helpers
-- [ ] **MIDI note to frequency** - Convert note numbers to Hz
-- [ ] **Note names** - Parse "C4", "A#3", etc.
-- [ ] **Scales** - Major, minor, pentatonic, chromatic generators
-- [ ] **Chords** - Chord type to frequency list
-- [ ] **Tempo/BPM utilities** - Beat duration, time signatures
+### Music Theory Helpers ✓
+- [x] **MIDI note to frequency** - Convert note numbers to Hz (midiToFreq, freqToMidi)
+- [x] **Note names** - Parse "C4", "A#3", etc. (parseNote, Note.toString)
+- [x] **Scales** - Major, minor, pentatonic, chromatic, modes (Scale module)
+- [x] **Chords** - Chord type to frequency list, inversions, voicings (Chord module)
+- [x] **Tempo/BPM utilities** - Beat duration, time signatures, synced delays (Tempo module)
 
 ### File I/O
 - [ ] **WAV export** - Write rendered audio to WAV files

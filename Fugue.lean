@@ -37,6 +37,7 @@
   - `Fugue.Env`: ADSR envelopes
   - `Fugue.Effects`: Audio effects (distortion, delay, reverb, chorus, modulation)
   - `Fugue.Filter`: Digital filters (lowpass, highpass, bandpass, resonant, enveloped)
+  - `Fugue.Theory`: Music theory (MIDI, notes, scales, chords, tempo)
   - `Fugue.Render`: Signal to sample buffer conversion
   - `Fugue.FFI`: macOS audio playback
 -/
@@ -74,6 +75,12 @@ import Fugue.Effects.Reverb
 import Fugue.Filter.OnePole
 import Fugue.Filter.Biquad
 import Fugue.Filter.Envelope
+
+-- Music Theory
+import Fugue.Theory.Note
+import Fugue.Theory.Scale
+import Fugue.Theory.Chord
+import Fugue.Theory.Tempo
 
 -- Rendering
 import Fugue.Render.Config

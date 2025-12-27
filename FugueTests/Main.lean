@@ -12,6 +12,7 @@ open Fugue.Combine
 open Fugue.Render
 open Fugue.Effects
 open Fugue.Filter
+open Fugue.Theory
 
 -- Helper to get absolute value of float
 def absFloat (x : Float) : Float := if x < 0.0 then -x else x
@@ -535,6 +536,142 @@ test "crossover splits signal into two bands" := do
 #generate_tests
 
 end Tests.Filter
+
+-- ============================================================================
+-- Music Theory Tests
+-- ============================================================================
+
+namespace Tests.Theory
+
+testSuite "Theory"
+
+-- Note tests
+
+test "midiToFreq A4 is 440Hz" := do
+  approxEq (midiToFreq 69) 440.0 ≡ true
+
+test "midiToFreq C4 is ~261.63Hz" := do
+  approxEq (midiToFreq 60) 261.63 0.01 ≡ true
+
+test "midiToFreq octave doubles frequency" := do
+  let c4 := midiToFreq 60
+  let c5 := midiToFreq 72
+  approxEq c5 (c4 * 2.0) 0.01 ≡ true
+
+test "freqToMidi round trips correctly" := do
+  (freqToMidi 440.0 == 69) ≡ true
+
+test "Note.toMidi C4 is 60" := do
+  let note : Note := { name := .C, octave := 4 }
+  (note.toMidi == 60) ≡ true
+
+test "Note.toMidi A4 is 69" := do
+  let note : Note := { name := .A, octave := 4 }
+  (note.toMidi == 69) ≡ true
+
+test "Note.fromMidi creates correct note" := do
+  let note := Note.fromMidi 60
+  (note.name == NoteName.C && note.octave == 4) ≡ true
+
+test "parseNote parses C4" := do
+  match parseNote "C4" with
+  | some n => (n.name == NoteName.C && n.octave == 4) ≡ true
+  | none => false ≡ true
+
+test "parseNote parses F#3" := do
+  match parseNote "F#3" with
+  | some n => (n.name == NoteName.Fs && n.octave == 3) ≡ true
+  | none => false ≡ true
+
+test "parseNote parses Bb5" := do
+  match parseNote "Bb5" with
+  | some n => (n.name == NoteName.As && n.octave == 5) ≡ true
+  | none => false ≡ true
+
+test "transpose raises note by semitones" := do
+  let c4 := 60
+  let e4 := transpose c4 4  -- Major third
+  (e4 == 64) ≡ true
+
+-- Scale tests
+
+test "major scale has 7 notes" := do
+  (Scale.major.intervals.length == 7) ≡ true
+
+test "major scale intervals are correct" := do
+  (Scale.major.intervals == [0, 2, 4, 5, 7, 9, 11]) ≡ true
+
+test "minor pentatonic has 5 notes" := do
+  (Scale.minorPentatonic.intervals.length == 5) ≡ true
+
+test "chromatic has 12 notes" := do
+  (Scale.chromatic.intervals.length == 12) ≡ true
+
+test "Scale.toMidi generates correct notes" := do
+  let cMajor := Scale.major.toMidi 60  -- C major starting at C4
+  (cMajor == [60, 62, 64, 65, 67, 69, 71]) ≡ true
+
+test "Scale.contains works correctly" := do
+  let inScale := Scale.major.contains 60 62   -- D is in C major
+  let notInScale := Scale.major.contains 60 61  -- Db is not in C major
+  (inScale && !notInScale) ≡ true
+
+-- Chord tests
+
+test "major triad has 3 notes" := do
+  (ChordType.major.intervals.length == 3) ≡ true
+
+test "major triad intervals are correct" := do
+  (ChordType.major.intervals == [0, 4, 7]) ≡ true
+
+test "minor7 has 4 notes" := do
+  (ChordType.minor7.intervals.length == 4) ≡ true
+
+test "Chord.toMidi generates correct notes" := do
+  let cMajor : Chord := { root := 60, chordType := ChordType.major }
+  (cMajor.toMidi == [60, 64, 67]) ≡ true
+
+test "Chord.toFreq generates frequencies" := do
+  let a4 : Chord := { root := 69, chordType := ChordType.major }
+  let freqs := a4.toFreq
+  approxEq freqs[0]! 440.0 ≡ true
+
+test "Chord.invert moves notes up" := do
+  let cMajor : Chord := { root := 60, chordType := ChordType.major }
+  let firstInv := cMajor.invert 1
+  (firstInv == [64, 67, 72]) ≡ true
+
+-- Tempo tests
+
+test "beatDuration at 120 BPM is 0.5s" := do
+  approxEq (beatDuration 120.0) 0.5 ≡ true
+
+test "beatDuration at 60 BPM is 1.0s" := do
+  approxEq (beatDuration 60.0) 1.0 ≡ true
+
+test "measureDuration at 120 BPM 4/4 is 2.0s" := do
+  approxEq (measureDuration 120.0 4) 2.0 ≡ true
+
+test "noteDuration quarter at 120 BPM is 0.5s" := do
+  approxEq (noteDuration 120.0 .quarter) 0.5 ≡ true
+
+test "noteDuration eighth at 120 BPM is 0.25s" := do
+  approxEq (noteDuration 120.0 .eighth) 0.25 ≡ true
+
+test "syncedDelay returns correct duration" := do
+  approxEq (syncedDelay 120.0 .quarter) 0.5 ≡ true
+
+test "syncedLfoRate returns correct frequency" := do
+  -- Quarter note at 120 BPM = 0.5s, so LFO = 2 Hz
+  approxEq (syncedLfoRate 120.0 .quarter) 2.0 ≡ true
+
+test "barBeatToSeconds converts correctly" := do
+  -- At 120 BPM, bar 1 beat 0 = 2 seconds (after first measure)
+  approxEq (barBeatToSeconds 120.0 1 0.0 4) 2.0 ≡ true
+
+#generate_tests
+
+end Tests.Theory
 
 -- ============================================================================
 -- Main

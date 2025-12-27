@@ -13,6 +13,7 @@ open Fugue.Render
 open Fugue.FFI
 open Fugue.Effects
 open Fugue.Filter
+open Fugue.Theory
 
 /-- Play a single note with ADSR envelope. -/
 def playNote (player : AudioPlayer) (freq : Float) (duration : Float) : IO Unit := do
@@ -243,6 +244,65 @@ def playOscillators (player : AudioPlayer) : IO Unit := do
   let kickNote := applyEnvelope kickEnv kick
   player.play (renderDSignalClipped cdQuality (scaleD 0.5 kickNote))
 
+/-- Demonstrate music theory helpers. -/
+def playMusicTheory (player : AudioPlayer) : IO Unit := do
+  IO.println "Demonstrating music theory..."
+
+  let env := ADSR.create (attack := 0.01) (decay := 0.1) (sustain := 0.6) (release := 0.3)
+  let holdTime := 0.3
+
+  -- Parse note names and play
+  IO.println "  Playing notes from names (C4, E4, G4)..."
+  for noteName in ["C4", "E4", "G4"] do
+    match parseNote noteName with
+    | some note =>
+      let freq := note.toFreq
+      let sig := applyEnvelopeWithHold env holdTime (sine freq)
+      player.play (renderDSignalClipped cdQuality (scaleD 0.3 sig))
+    | none => pure ()
+
+  -- Play a scale
+  IO.println "  Playing C major scale..."
+  let cMajorNotes := Scale.major.toMidi 60  -- C4 = MIDI 60
+  for midi in cMajorNotes do
+    let freq := midiToFreq midi
+    let sig := applyEnvelopeWithHold env 0.15 (sine freq)
+    player.play (renderDSignalClipped cdQuality (scaleD 0.3 sig))
+
+  -- Play a minor pentatonic scale
+  IO.println "  Playing A minor pentatonic..."
+  let aMinorPent := Scale.minorPentatonic.toMidi 69  -- A4 = MIDI 69
+  for midi in aMinorPent do
+    let freq := midiToFreq midi
+    let sig := applyEnvelopeWithHold env 0.15 (sawtooth freq)
+    player.play (renderDSignalClipped cdQuality (scaleD 0.2 sig))
+
+  -- Play chords
+  IO.println "  Playing chord progression (I-IV-V-I in C)..."
+  let chordEnv := ADSR.create (attack := 0.02) (decay := 0.1) (sustain := 0.5) (release := 0.2)
+  let progression := generateProgression 60 Progression.classic
+  for chord in progression do
+    let freqs := chord.toFreq
+    -- Mix all chord tones
+    let chordSig : Signal Float := fun t =>
+      let sum := freqs.foldl (init := 0.0) fun acc freq =>
+        acc + (sine freq).sample t
+      sum / freqs.length.toFloat
+    let chordNote := applyEnvelopeWithHold chordEnv 0.4 chordSig
+    player.play (renderDSignalClipped cdQuality (scaleD 0.25 chordNote))
+
+  -- Tempo-synced arpeggio
+  IO.println "  Playing tempo-synced arpeggio (120 BPM, 16th notes)..."
+  let bpm := 120.0
+  let sixteenthDur := noteDuration bpm .sixteenth
+  let chord : Chord := { root := 60, chordType := ChordType.major7 }
+  let arpNotes := chord.toMidi ++ chord.toMidi.map (· + 12)  -- Add octave
+  let arpEnv := ADSR.create (attack := 0.005) (decay := 0.05) (sustain := 0.3) (release := 0.1)
+  for midi in arpNotes do
+    let freq := midiToFreq midi
+    let sig := applyEnvelopeWithHold arpEnv (sixteenthDur * 0.8) (triangle freq)
+    player.play (renderDSignalClipped cdQuality (scaleD 0.3 sig))
+
 def main : IO Unit := do
   IO.println "Fugue Demo - Sound Synthesis Library"
   IO.println "====================================\n"
@@ -271,6 +331,9 @@ def main : IO Unit := do
   IO.println ""
 
   playOscillators player
+  IO.println ""
+
+  playMusicTheory player
   IO.println ""
 
   IO.println "Demo complete!"
