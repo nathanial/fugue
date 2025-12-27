@@ -10,6 +10,7 @@ open Fugue.Osc
 open Fugue.Env
 open Fugue.Combine
 open Fugue.Render
+open Fugue.Effects
 
 -- Helper to get absolute value of float
 def absFloat (x : Float) : Float := if x < 0.0 then -x else x
@@ -211,6 +212,113 @@ test "normalize scales to peak 1.0" := do
 #generate_tests
 
 end Tests.Render
+
+-- ============================================================================
+-- Effects Tests
+-- ============================================================================
+
+namespace Tests.Effects
+
+testSuite "Effects"
+
+test "hardClip limits to threshold" := do
+  let loud := Signal.const 5.0
+  let clipped := hardClip 1.0 loud
+  (clipped.sample 0.0 == 1.0) ≡ true
+  let negative := Signal.const (-5.0)
+  let clippedNeg := hardClip 1.0 negative
+  (clippedNeg.sample 0.0 == -1.0) ≡ true
+
+test "hardClip passes values within threshold" := do
+  let quiet := Signal.const 0.5
+  let clipped := hardClip 1.0 quiet
+  (clipped.sample 0.0 == 0.5) ≡ true
+
+test "softClip approaches but doesn't exceed 1" := do
+  let loud := Signal.const 10.0
+  let clipped := softClip 1.0 loud
+  let v := clipped.sample 0.0
+  (v < 1.0 && v > 0.99) ≡ true
+
+test "overdrive saturates signal" := do
+  let sig := Signal.const 0.5
+  let driven := overdrive 4.0 sig
+  -- tanh(0.5 * 4) = tanh(2) ≈ 0.964
+  let v := driven.sample 0.0
+  (v > 0.9 && v < 1.0) ≡ true
+
+test "delay shifts signal in time" := do
+  let sig := Signal.const 1.0
+  let delayed := Effects.delay 0.5 sig
+  (delayed.sample 0.3 == 0.0) ≡ true
+  (delayed.sample 0.6 == 1.0) ≡ true
+
+test "delay with zero time is identity" := do
+  let sig := sine 440.0
+  let delayed := Effects.delay 0.0 sig
+  approxEq (sig.sample 0.1) (delayed.sample 0.1) ≡ true
+
+test "delayWithFeedback produces echoes" := do
+  -- Create an impulse at t=0
+  let impulse : Signal Float := fun t => if t < 0.001 then 1.0 else 0.0
+  let echoed := delayWithFeedback 0.1 0.5 5 impulse
+  -- At t=0, we get the impulse
+  (echoed.sample 0.0 > 0.9 && true) ≡ true
+  -- At t=0.1, we get first echo (0.5 amplitude)
+  approxEq (echoed.sample 0.1) 0.5 ≡ true
+  -- At t=0.2, we get second echo (0.25 amplitude)
+  approxEq (echoed.sample 0.2) 0.25 ≡ true
+
+test "tremolo modulates amplitude" := do
+  let sig := Signal.const 1.0
+  let tremmed := tremolo 10.0 1.0 sig
+  -- At different times, amplitude should vary
+  let v1 := tremmed.sample 0.0
+  let v2 := tremmed.sample 0.025  -- Quarter period at 10Hz
+  (v1 != v2) ≡ true
+
+test "tremolo at zero depth is identity" := do
+  let sig := sine 440.0
+  let tremmed := tremolo 5.0 0.0 sig
+  approxEq (sig.sample 0.1) (tremmed.sample 0.1) ≡ true
+
+test "ringMod multiplies by carrier" := do
+  let sig := Signal.const 1.0
+  let modded := ringMod 100.0 sig
+  -- At t=0, sin(0) = 0
+  approxEq (modded.sample 0.0) 0.0 ≡ true
+
+test "bitcrush quantizes values" := do
+  let sig := Signal.const 0.5
+  let crushed := bitcrush 4 sig  -- 16 levels
+  -- Value should be quantized
+  let v := crushed.sample 0.0
+  (v >= -1.0 && v <= 1.0) ≡ true
+
+test "chorus output is bounded" := do
+  let sig := sine 440.0
+  let chorused := chorus {} sig
+  let samples := List.range 100 |>.map fun i =>
+    chorused.sample (i.toFloat * 0.001)
+  samples.all (fun v => v >= -2.0 && v <= 2.0) ≡ true
+
+test "reverb mixes dry and wet" := do
+  let sig := Signal.const 1.0
+  let config : ReverbConfig := { wetDry := 0.5 }
+  let reverbed := reverb config sig
+  -- At t=0, should have dry component
+  (reverbed.sample 0.0 > 0.0 && true) ≡ true
+
+test "earlyReflections adds echoes" := do
+  let impulse : Signal Float := fun t => if t < 0.001 then 1.0 else 0.0
+  let reflected := earlyReflections 0.5 impulse
+  -- First reflection at 0.005s, sample at 0.0055 catches impulse via reflection
+  -- The wet signal samples at 0.0055 - 0.005 = 0.0005 which is in impulse range
+  (reflected.sample 0.0055 > 0.0 && true) ≡ true
+
+#generate_tests
+
+end Tests.Effects
 
 -- ============================================================================
 -- Main

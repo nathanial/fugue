@@ -35,6 +35,7 @@
   - `Fugue.Osc`: Oscillators (sine, square, sawtooth, triangle, noise)
   - `Fugue.Combine`: Mixing, scaling, sequencing
   - `Fugue.Env`: ADSR envelopes
+  - `Fugue.Effects`: Audio effects (distortion, delay, reverb, chorus, modulation)
   - `Fugue.Render`: Signal to sample buffer conversion
   - `Fugue.FFI`: macOS audio playback
 -/
@@ -57,6 +58,13 @@ import Fugue.Combine.Sequence
 
 -- Envelopes
 import Fugue.Env.ADSR
+
+-- Effects
+import Fugue.Effects.Distortion
+import Fugue.Effects.Modulation
+import Fugue.Effects.Delay
+import Fugue.Effects.Chorus
+import Fugue.Effects.Reverb
 
 -- Rendering
 import Fugue.Render.Config

@@ -11,6 +11,7 @@ open Fugue.Env
 open Fugue.Combine
 open Fugue.Render
 open Fugue.FFI
+open Fugue.Effects
 
 /-- Play a single note with ADSR envelope. -/
 def playNote (player : AudioPlayer) (freq : Float) (duration : Float) : IO Unit := do
@@ -114,6 +115,50 @@ def playBass (player : AudioPlayer) : IO Unit := do
   let samples := renderDSignalClipped cdQuality (scaleD 0.4 bass)
   player.play samples
 
+/-- Demonstrate audio effects. -/
+def playEffects (player : AudioPlayer) : IO Unit := do
+  IO.println "Demonstrating audio effects..."
+
+  let env := ADSR.create (attack := 0.01) (decay := 0.1) (sustain := 0.6) (release := 0.3)
+  let freq := 330.0  -- E4
+  let holdTime := 0.5
+
+  -- Clean note for comparison
+  IO.println "  Clean sine wave..."
+  let cleanNote := applyEnvelopeWithHold env holdTime (sine freq)
+  player.play (renderDSignalClipped cdQuality (scaleD 0.4 cleanNote))
+
+  -- With overdrive
+  IO.println "  With overdrive..."
+  let drivenSig := overdrive 3.0 (sine freq)
+  let drivenNote := applyEnvelopeWithHold env holdTime drivenSig
+  player.play (renderDSignalClipped cdQuality (scaleD 0.3 drivenNote))
+
+  -- With tremolo
+  IO.println "  With tremolo..."
+  let tremSig := tremolo 6.0 0.6 (sine freq)
+  let tremNote := applyEnvelopeWithHold env holdTime tremSig
+  player.play (renderDSignalClipped cdQuality (scaleD 0.4 tremNote))
+
+  -- With delay
+  IO.println "  With delay/echo..."
+  let delaySig := slapback 0.15 0.5 (sine freq)
+  let delayNote := applyEnvelopeWithHold env holdTime delaySig
+  player.play (renderDSignalClipped cdQuality (scaleD 0.3 delayNote))
+
+  -- With chorus
+  IO.println "  With chorus..."
+  let chorusSig := chorusSimple 1.2 0.003 (sine freq)
+  let chorusNote := applyEnvelopeWithHold env holdTime chorusSig
+  player.play (renderDSignalClipped cdQuality (scaleD 0.4 chorusNote))
+
+  -- With reverb
+  IO.println "  With reverb..."
+  let reverbConfig : ReverbConfig := { roomSize := 0.6, wetDry := 0.4 }
+  let reverbSig := reverb reverbConfig (sine freq)
+  let reverbNote := applyEnvelopeWithHold env (holdTime + 0.3) reverbSig
+  player.play (renderDSignalClipped cdQuality (scaleD 0.3 reverbNote))
+
 def main : IO Unit := do
   IO.println "Fugue Demo - Sound Synthesis Library"
   IO.println "====================================\n"
@@ -133,6 +178,9 @@ def main : IO Unit := do
   IO.println ""
 
   playBass player
+  IO.println ""
+
+  playEffects player
   IO.println ""
 
   IO.println "Demo complete!"
