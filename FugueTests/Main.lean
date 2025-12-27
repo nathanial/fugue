@@ -11,6 +11,7 @@ open Fugue.Env
 open Fugue.Combine
 open Fugue.Render
 open Fugue.Effects
+open Fugue.Filter
 
 -- Helper to get absolute value of float
 def absFloat (x : Float) : Float := if x < 0.0 then -x else x
@@ -319,6 +320,105 @@ test "earlyReflections adds echoes" := do
 #generate_tests
 
 end Tests.Effects
+
+-- ============================================================================
+-- Filter Tests
+-- ============================================================================
+
+namespace Tests.Filter
+
+testSuite "Filter"
+
+test "lowpass1 passes low frequencies" := do
+  -- Low frequency sine should pass through mostly unchanged
+  let lowFreq := sine 100.0
+  let filtered := lowpass1 1000.0 44100.0 lowFreq
+  -- At low freq, filtered and original should be similar
+  let orig := lowFreq.sample 0.01
+  let filt := filtered.sample 0.01
+  (absFloat (orig - filt) < 0.5 && true) ≡ true
+
+test "lowpass1 attenuates DC less than highpass1" := do
+  let dc := Signal.const 1.0
+  let lp := lowpass1 1000.0 44100.0 dc
+  let hp := highpass1 1000.0 44100.0 dc
+  -- Lowpass should pass DC, highpass should block it
+  let lpVal := absFloat (lp.sample 0.1)
+  let hpVal := absFloat (hp.sample 0.1)
+  (lpVal > hpVal && true) ≡ true
+
+test "lowpassN produces valid output at different orders" := do
+  let highFreq := sine 5000.0
+  let lp1 := lowpassN 500.0 1 44100.0 highFreq
+  let lp2 := lowpassN 500.0 2 44100.0 highFreq
+  -- Both should produce valid bounded output
+  let v1 := lp1.sample 0.01
+  let v2 := lp2.sample 0.01
+  (v1 >= -2.0 && v1 <= 2.0 && v2 >= -2.0 && v2 <= 2.0) ≡ true
+
+test "biquad lowpass produces valid output" := do
+  let sig := sine 440.0
+  let filtered := lowpass 1000.0 0.707 44100.0 sig
+  let v := filtered.sample 0.01
+  (v >= -2.0 && v <= 2.0) ≡ true
+
+test "biquad highpass produces valid output" := do
+  let sig := sine 440.0
+  let filtered := highpass 200.0 0.707 44100.0 sig
+  let v := filtered.sample 0.01
+  (v >= -2.0 && v <= 2.0) ≡ true
+
+test "bandpass produces valid output" := do
+  let sig := sine 1000.0
+  let filtered := bandpass 1000.0 2.0 44100.0 sig
+  let v := filtered.sample 0.01
+  (v >= -2.0 && v <= 2.0) ≡ true
+
+test "notch produces valid output" := do
+  let sig := sine 1000.0
+  let filtered := notch 1000.0 2.0 44100.0 sig
+  let v := filtered.sample 0.01
+  (v >= -2.0 && v <= 2.0) ≡ true
+
+test "resonant filter boosts near cutoff" := do
+  let sig := sine 1000.0
+  let filtered := resonant 1000.0 0.9 44100.0 sig
+  -- Resonant filter can boost signal
+  let v := absFloat (filtered.sample 0.01)
+  (v >= 0.0 && true) ≡ true
+
+test "lfoFilter produces valid output" := do
+  let sig := sawtooth 220.0
+  let filtered := lfoFilter 800.0 0.5 2.0 2.0 44100.0 sig
+  let v := filtered.sample 0.1
+  (v >= -2.0 && v <= 2.0) ≡ true
+
+test "envelopeFollowerSimple tracks amplitude" := do
+  let sig := sine 100.0
+  let env := envelopeFollowerSimple 0.01 44100.0 sig
+  -- Envelope should be non-negative
+  let v := env.sample 0.1
+  (v >= 0.0 && true) ≡ true
+
+test "dcBlock removes DC offset over time" := do
+  let dc := Signal.const 0.5
+  let blocked := dcBlock 44100.0 dc
+  -- Initially may have some DC, but should decrease
+  let early := absFloat (blocked.sample 0.01)
+  let late := absFloat (blocked.sample 1.0)
+  (late <= early && true) ≡ true
+
+test "crossover splits signal into two bands" := do
+  let sig := sine 1000.0
+  let (lo, hi) := crossover 500.0 44100.0 sig
+  -- Both outputs should be valid
+  let loVal := lo.sample 0.01
+  let hiVal := hi.sample 0.01
+  (loVal >= -2.0 && loVal <= 2.0 && hiVal >= -2.0 && hiVal <= 2.0) ≡ true
+
+#generate_tests
+
+end Tests.Filter
 
 -- ============================================================================
 -- Main

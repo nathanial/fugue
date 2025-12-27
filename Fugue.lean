@@ -36,6 +36,7 @@
   - `Fugue.Combine`: Mixing, scaling, sequencing
   - `Fugue.Env`: ADSR envelopes
   - `Fugue.Effects`: Audio effects (distortion, delay, reverb, chorus, modulation)
+  - `Fugue.Filter`: Digital filters (lowpass, highpass, bandpass, resonant, enveloped)
   - `Fugue.Render`: Signal to sample buffer conversion
   - `Fugue.FFI`: macOS audio playback
 -/
@@ -65,6 +66,11 @@ import Fugue.Effects.Modulation
 import Fugue.Effects.Delay
 import Fugue.Effects.Chorus
 import Fugue.Effects.Reverb
+
+-- Filters
+import Fugue.Filter.OnePole
+import Fugue.Filter.Biquad
+import Fugue.Filter.Envelope
 
 -- Rendering
 import Fugue.Render.Config

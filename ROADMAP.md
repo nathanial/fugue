@@ -2,19 +2,19 @@
 
 ## Features
 
-### Audio Effects
-- [ ] **Delay** - Echo/delay effect with feedback control
-- [ ] **Reverb** - Simple algorithmic reverb (Schroeder or Freeverb)
-- [ ] **Distortion** - Soft clipping, hard clipping, waveshaping
-- [ ] **Chorus** - Detuned copies for thickness
-- [ ] **Tremolo** - Amplitude modulation effect
+### Audio Effects ✓
+- [x] **Delay** - Echo/delay effect with feedback control
+- [x] **Reverb** - Simple algorithmic reverb (Schroeder or Freeverb)
+- [x] **Distortion** - Soft clipping, hard clipping, waveshaping
+- [x] **Chorus** - Detuned copies for thickness
+- [x] **Tremolo** - Amplitude modulation effect
 
-### Filters
-- [ ] **Low-pass filter** - Remove high frequencies (biquad implementation)
-- [ ] **High-pass filter** - Remove low frequencies
-- [ ] **Band-pass filter** - Isolate frequency range
-- [ ] **Resonant filter** - Filter with Q/resonance control
-- [ ] **Filter envelope** - Time-varying filter cutoff
+### Filters ✓
+- [x] **Low-pass filter** - Remove high frequencies (biquad implementation)
+- [x] **High-pass filter** - Remove low frequencies
+- [x] **Band-pass filter** - Isolate frequency range
+- [x] **Resonant filter** - Filter with Q/resonance control
+- [x] **Filter envelope** - Time-varying filter cutoff
 
 ### Oscillators
 - [ ] **Pulse wave** - Square wave with variable duty cycle

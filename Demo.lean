@@ -12,6 +12,7 @@ open Fugue.Combine
 open Fugue.Render
 open Fugue.FFI
 open Fugue.Effects
+open Fugue.Filter
 
 /-- Play a single note with ADSR envelope. -/
 def playNote (player : AudioPlayer) (freq : Float) (duration : Float) : IO Unit := do
@@ -159,6 +160,38 @@ def playEffects (player : AudioPlayer) : IO Unit := do
   let reverbNote := applyEnvelopeWithHold env (holdTime + 0.3) reverbSig
   player.play (renderDSignalClipped cdQuality (scaleD 0.3 reverbNote))
 
+/-- Demonstrate filter effects. -/
+def playFilters (player : AudioPlayer) : IO Unit := do
+  IO.println "Demonstrating filters..."
+
+  let env := ADSR.create (attack := 0.01) (decay := 0.1) (sustain := 0.6) (release := 0.3)
+  let holdTime := 0.5
+
+  -- Bright sawtooth (unfiltered)
+  IO.println "  Unfiltered sawtooth..."
+  let saw := applyEnvelopeWithHold env holdTime (sawtooth 220.0)
+  player.play (renderDSignalClipped cdQuality (scaleD 0.3 saw))
+
+  -- With lowpass filter (muffled)
+  IO.println "  With lowpass filter (800 Hz)..."
+  let lpSaw := applyEnvelopeWithHold env holdTime (lowpass 800.0 0.707 44100.0 (sawtooth 220.0))
+  player.play (renderDSignalClipped cdQuality (scaleD 0.3 lpSaw))
+
+  -- With resonant filter (synth-like)
+  IO.println "  With resonant filter..."
+  let resSaw := applyEnvelopeWithHold env holdTime (resonant 600.0 0.8 44100.0 (sawtooth 220.0))
+  player.play (renderDSignalClipped cdQuality (scaleD 0.3 resSaw))
+
+  -- Filter sweep (wah-wah style)
+  IO.println "  Filter sweep (LFO modulated)..."
+  let sweepSaw := applyEnvelopeWithHold env holdTime (lfoFilter 800.0 0.7 2.0 3.0 44100.0 (sawtooth 220.0))
+  player.play (renderDSignalClipped cdQuality (scaleD 0.3 sweepSaw))
+
+  -- Highpass filter (thin/tinny)
+  IO.println "  With highpass filter (1000 Hz)..."
+  let hpSaw := applyEnvelopeWithHold env holdTime (highpass 1000.0 0.707 44100.0 (sawtooth 220.0))
+  player.play (renderDSignalClipped cdQuality (scaleD 0.3 hpSaw))
+
 def main : IO Unit := do
   IO.println "Fugue Demo - Sound Synthesis Library"
   IO.println "====================================\n"
@@ -181,6 +214,9 @@ def main : IO Unit := do
   IO.println ""
 
   playEffects player
+  IO.println ""
+
+  playFilters player
   IO.println ""
 
   IO.println "Demo complete!"
