@@ -1,5 +1,4 @@
 # Lake build artifacts
-.lake/
 lake-packages/
 build/
 
@@ -18,3 +17,5 @@ build/
 *.a
 *.so
 *.dylib
+.lake
+lake-manifest.json
