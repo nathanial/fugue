@@ -54,8 +54,6 @@ test "scale multiplies by factor" := do
   let sig := Signal.const 5.0 |> Signal.scale 2.0
   (sig.sample 0.0 == 10.0) ≡ true
 
-#generate_tests
-
 end Tests.Signal
 
 -- ============================================================================
@@ -214,8 +212,6 @@ test "layeredSub produces bounded output" := do
   let v := layered.sample 0.01
   (v >= -2.0 && v <= 2.0) ≡ true
 
-#generate_tests
-
 end Tests.Oscillator
 
 -- ============================================================================
@@ -249,8 +245,6 @@ test "duration is sum of phases" := do
 test "percussive has zero sustain" := do
   let env := ADSR.percussive (decay := 0.5)
   (env.sustain == 0.0) ≡ true
-
-#generate_tests
 
 end Tests.ADSR
 
@@ -292,8 +286,6 @@ test "append sequences signals" := do
   (seq.signal.sample 0.5 == 1.0) ≡ true
   (seq.signal.sample 1.5 == 2.0) ≡ true
 
-#generate_tests
-
 end Tests.Combine
 
 -- ============================================================================
@@ -326,8 +318,6 @@ test "normalize scales to peak 1.0" := do
     |>.push 0.5 |>.push (-0.25)
   let normalized := normalize buffer
   approxEq (peakAmplitude normalized) 1.0 ≡ true
-
-#generate_tests
 
 end Tests.Render
 
@@ -434,8 +424,6 @@ test "earlyReflections adds echoes" := do
   -- The wet signal samples at 0.0055 - 0.005 = 0.0005 which is in impulse range
   (reflected.sample 0.0055 > 0.0 && true) ≡ true
 
-#generate_tests
-
 end Tests.Effects
 
 -- ============================================================================
@@ -532,8 +520,6 @@ test "crossover splits signal into two bands" := do
   let loVal := lo.sample 0.01
   let hiVal := hi.sample 0.01
   (loVal >= -2.0 && loVal <= 2.0 && hiVal >= -2.0 && hiVal <= 2.0) ≡ true
-
-#generate_tests
 
 end Tests.Filter
 
@@ -668,8 +654,6 @@ test "syncedLfoRate returns correct frequency" := do
 test "barBeatToSeconds converts correctly" := do
   -- At 120 BPM, bar 1 beat 0 = 2 seconds (after first measure)
   approxEq (barBeatToSeconds 120.0 1 0.0 4) 2.0 ≡ true
-
-#generate_tests
 
 end Tests.Theory
 

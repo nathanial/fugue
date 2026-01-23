@@ -4,7 +4,7 @@ open Lake DSL
 package fugue where
   version := v!"0.1.0"
 
-require crucible from git "https://github.com/nathanial/crucible" @ "v0.0.8"
+require crucible from git "https://github.com/nathanial/crucible" @ "v0.0.9"
 
 -- macOS AudioToolbox framework linking + library paths
 def audioLinkArgs : Array String :=
